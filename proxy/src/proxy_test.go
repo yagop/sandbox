@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/base64"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 )
@@ -64,6 +67,38 @@ func TestForwardHTTPInjects(t *testing.T) {
 	}
 	if got := resp.Header.Get("X-Echo-Auth"); got != "Bearer secret123" {
 		t.Errorf("upstream received auth %q, want injected token", got)
+	}
+}
+
+// TestNoTokenInLogs asserts the injected secret value never reaches log output
+// (which lands in `docker logs`, readable by anyone with socket access).
+func TestNoTokenInLogs(t *testing.T) {
+	hermeticUpstream(t)
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer up.Close()
+	uhost := hostOf(up.URL, "http")
+
+	const token = "SUPER-SECRET-TOKEN-VALUE-42"
+	config = Config{
+		Secrets: map[string]Secret{"s": {Type: "bearer", EnvVar: "TOK"}},
+		Rules:   []Rule{{Host: hostOnly(uhost), Inject: "s"}},
+	}
+	t.Setenv("TOK", token)
+
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+
+	proxy := httptest.NewServer(http.HandlerFunc(handle))
+	defer proxy.Close()
+	resp, err := proxyClient(proxy.URL, false).Get("http://" + uhost + "/secret-path")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+
+	if strings.Contains(buf.String(), token) {
+		t.Fatalf("token leaked into logs:\n%s", buf.String())
 	}
 }
 

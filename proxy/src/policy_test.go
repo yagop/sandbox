@@ -15,6 +15,37 @@ func TestMatchHostOnly(t *testing.T) {
 	}
 }
 
+func TestHostMatchesWildcard(t *testing.T) {
+	cases := []struct {
+		pattern, host string
+		want          bool
+	}{
+		{"github.com", "github.com", true},
+		{"github.com", "api.github.com", false},
+		{"*.githubusercontent.com", "objects.githubusercontent.com", true},
+		{"*.githubusercontent.com", "raw.githubusercontent.com", true},
+		{"*.githubusercontent.com", "a.b.githubusercontent.com", true},
+		{"*.githubusercontent.com", "githubusercontent.com", true},   // bare domain
+		{"*.githubusercontent.com", "evilgithubusercontent.com", false}, // not a subdomain
+		{"*.githubusercontent.com", "github.com", false},
+	}
+	for _, c := range cases {
+		if got := hostMatches(c.pattern, c.host); got != c.want {
+			t.Errorf("hostMatches(%q,%q)=%v want %v", c.pattern, c.host, got, c.want)
+		}
+	}
+}
+
+func TestMatchWildcardRule(t *testing.T) {
+	config = Config{Rules: []Rule{{Host: "*.githubusercontent.com", Inject: ""}}}
+	if match("objects.githubusercontent.com") == nil {
+		t.Error("wildcard rule should match subdomain")
+	}
+	if match("example.com") != nil {
+		t.Error("wildcard rule should not match unrelated host")
+	}
+}
+
 func TestDecide(t *testing.T) {
 	config = Config{AllowAll: false, Rules: []Rule{{Host: "h", Inject: "s"}}}
 

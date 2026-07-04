@@ -10,9 +10,10 @@
     { "host": "api.github.com", "inject": "github-api" },
     { "host": "codeload.github.com", "inject": "github" },
 
+    { "host": "*.githubusercontent.com" },
+
     { "host": "registry.npmjs.org", "inject": "npm" },
 
-    { "host": "objects.githubusercontent.com" },
     { "host": "proxy.golang.org" },
     { "host": "sum.golang.org" },
     { "host": "storage.googleapis.com" }

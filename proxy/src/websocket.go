@@ -17,6 +17,29 @@ func isWebSocketUpgrade(r *http.Request) bool {
 		strings.EqualFold(r.Header.Get("Upgrade"), "websocket")
 }
 
+// wsForwardSkip are proxy-scoped hop-by-hop headers that must not reach the
+// upstream on a WebSocket handshake. Unlike copyHeaders we keep Connection,
+// Upgrade and Sec-WebSocket-* — those ARE the handshake — but the proxy-auth
+// headers a client sends to us must never leak upstream.
+var wsForwardSkip = map[string]bool{
+	"Proxy-Authorization": true,
+	"Proxy-Authenticate":  true,
+	"Proxy-Connection":    true,
+}
+
+// copyWebSocketHeaders copies the client's handshake headers to the upstream
+// request, dropping only proxy-scoped headers (see wsForwardSkip).
+func copyWebSocketHeaders(dst, src http.Header) {
+	for k, vs := range src {
+		if wsForwardSkip[k] {
+			continue
+		}
+		for _, v := range vs {
+			dst.Add(k, v)
+		}
+	}
+}
+
 // headerHasToken reports whether the comma-separated header value contains token
 // (case-insensitive), e.g. Connection: "keep-alive, Upgrade".
 func headerHasToken(header, token string) bool {
@@ -49,11 +72,7 @@ func forwardWebSocket(w http.ResponseWriter, r *http.Request, authority string, 
 		http.Error(w, "sandbox-proxy: bad gateway", http.StatusBadGateway)
 		return
 	}
-	for k, vs := range r.Header {
-		for _, v := range vs {
-			outReq.Header.Add(k, v)
-		}
-	}
+	copyWebSocketHeaders(outReq.Header, r.Header)
 	outReq.Host = hostHeader("https", authority)
 	if rule != nil {
 		inject(outReq, rule)

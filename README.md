@@ -28,7 +28,8 @@ upstream  (github.com, api.github.com, registry.npmjs.org, …)
 - 🚫 **Default-deny** by `host` (or `allow_all` to open egress while keeping
   injection scoped).
 - 🔏 **HTTPS interception** via a CA it generates on first run and the sandbox
-  trusts; hosts you don't inject into can be blind-tunnelled untouched.
+  trusts; the intercepted TLS speaks **HTTP/1.1 only** (ALPN pins `http/1.1`),
+  and hosts you don't inject into can be blind-tunnelled untouched.
 - 🛡️ A compromised workload can at most *use* a token against the hosts you
   allow — it can't read or exfiltrate the secret itself.
 
@@ -140,9 +141,10 @@ read from the proxy's environment) to **rules** (which host gets which secret):
     "npm":        { "type": "bearer", "env": "NPM_TOKEN" }
   },
   "rules": [
-    { "host": "github.com",         "inject": "github" },
-    { "host": "api.github.com",     "inject": "github-api" },
-    { "host": "registry.npmjs.org", "inject": "npm" }
+    { "host": "github.com",              "inject": "github" },
+    { "host": "api.github.com",          "inject": "github-api" },
+    { "host": "*.githubusercontent.com" },
+    { "host": "registry.npmjs.org",      "inject": "npm" }
   ]
 }
 ```
@@ -150,9 +152,11 @@ read from the proxy's environment) to **rules** (which host gets which secret):
 - **secrets** — `type` is `bearer` or `basic`; `env` names the host env var
   holding the token (never the value itself). `username` is for basic auth
   (GitHub uses the token as the *password* with any username).
-- **rules** — matched by `host` (exact), covering all methods and paths.
-  `inject` names a secret to add on every request; omit it to allow a host with
-  no credential added.
+- **rules** — matched by `host`, covering all methods and paths. A `*.` prefix
+  is a suffix wildcard: `*.githubusercontent.com` matches `objects.` / `raw.` /
+  any subdomain (and the bare domain) — handy for CDN hosts behind
+  gh-release/git-lfs/npm-tarball downloads. `inject` names a secret to add on
+  every request; omit it to allow a host with no credential added.
 - **`allow_all`** — `false` (default) is default-deny: only listed hosts are
   reachable. `true` opens egress to **everything** but still injects only on
   listed hosts (others are blind-tunnelled, untouched). ⚠️ `allow_all` turns off
@@ -203,8 +207,10 @@ built binary.
 
 ## 🛡️ Security notes
 
-- **Guard `ca.key`** — anyone with it can mint trusted certs for the sandbox.
-  It's created `0600`; keep the volume private.
+- **`ca.key` stays in the proxy.** It lives (mode `0600`) in the proxy-only CA
+  volume; sandboxes bind-mount **only** the public `ca.crt` read-only, never the
+  volume — so a workload can't read the key and mint trusted certs. Keep the CA
+  volume private on the host.
 - **Lock down the network**, not just the env. The `--internal` sandbox network
   (`sandbox-net`) is what actually forces traffic through the proxy; without it a
   workload could ignore `HTTPS_PROXY` and dial out directly. `sandbox.sh` creates

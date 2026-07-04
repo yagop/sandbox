@@ -28,7 +28,10 @@ fi
 # --- config (override via env before sourcing) --------------------------------
 : "${SANDBOX_NET:=sandbox-net}"          # internal network: sandboxes + proxy
 : "${SANDBOX_EGRESS:=sandbox-egress}"    # egress network: proxy only
-: "${SANDBOX_CA_VOL:=sandbox-ca}"        # shared volume holding the proxy CA
+: "${SANDBOX_CA_VOL:=sandbox-ca}"        # proxy-only volume holding ca.crt + ca.key
+# Sandboxes get ONLY the public ca.crt (bind-mounted read-only), never the CA
+# volume — so a workload can't read ca.key and mint trusted certs.
+: "${SANDBOX_CACERT_FILE:=${XDG_CACHE_HOME:-$HOME/.cache}/sandbox-proxy/ca.crt}"
 : "${SANDBOX_PROXY_NAME:=sandbox-proxy}"
 : "${SANDBOX_PROXY_IMAGE:=sandbox-proxy:latest}"
 : "${SANDBOX_BOX_IMAGE:=sandbox-box:latest}"
@@ -150,7 +153,16 @@ _sbx_proxy_up() {
   if ! docker exec "$SANDBOX_PROXY_NAME" test -f /ca/ca.crt >/dev/null 2>&1; then
     echo "sandbox: warning: proxy CA not ready — check 'sandbox proxy logs'" >&2
   fi
+  _sbx_export_cacert
   echo "sandbox: proxy up ($SANDBOX_PROXY_NAME)"
+}
+
+# Copy ONLY the public ca.crt out of the proxy container to a host file, so
+# sandboxes can trust it without ever mounting the CA volume (which holds ca.key).
+_sbx_export_cacert() {
+  mkdir -p "$(dirname "$SANDBOX_CACERT_FILE")" 2>/dev/null || true
+  docker cp -q "$SANDBOX_PROXY_NAME:/ca/ca.crt" "$SANDBOX_CACERT_FILE" 2>/dev/null \
+    || echo "sandbox: warning: could not export ca.crt to $SANDBOX_CACERT_FILE" >&2
 }
 
 _sbx_proxy_down() {
@@ -199,6 +211,8 @@ _sbx_run() {
     _sbx_proxy_up || return 1
   fi
   _sbx_ensure_image box || return 1
+  # Ensure the exported ca.crt exists (e.g. proxy started in a prior shell).
+  [ -f "$SANDBOX_CACERT_FILE" ] || _sbx_export_cacert
   # Unique name per sandbox so many can run at once against the one proxy.
   local base tag wd
   base="$(basename "$PWD")"
@@ -206,13 +220,14 @@ _sbx_run() {
   wd="/workspace/$base"   # ~/x  ->  /workspace/x
 
   # Build argv as an array (portable across bash/zsh; no word-split surprises).
+  # Mount ONLY ca.crt (read-only) — never the CA volume, so ca.key stays in the proxy.
   local -a args
   args=(run --rm -it
         --name "sandbox-$base-$tag"
         --label sandbox.role=box
         --network "$SANDBOX_NET"
         -e "TERM=${TERM:-xterm-256color}" -e COLORTERM
-        -v "$SANDBOX_CA_VOL:/ca:ro"
+        -v "$SANDBOX_CACERT_FILE:/ca/ca.crt:ro"
         -v "$PWD:$wd" -w "$wd")
 
   # Extra persistent volumes (tool configs, caches, ...). Each entry in

@@ -7,14 +7,24 @@ import (
 	"strings"
 )
 
-// match returns the rule for host (exact), or nil.
+// match returns the first rule whose host pattern matches, or nil.
 func match(host string) *Rule {
 	for i := range config.Rules {
-		if config.Rules[i].Host == host {
+		if hostMatches(config.Rules[i].Host, host) {
 			return &config.Rules[i]
 		}
 	}
 	return nil
+}
+
+// hostMatches reports whether host satisfies a rule pattern. A pattern of the
+// form "*.example.com" matches "example.com" and any subdomain of it (at any
+// depth: "raw.example.com", "a.b.example.com"); any other pattern is exact.
+func hostMatches(pattern, host string) bool {
+	if suffix, ok := strings.CutPrefix(pattern, "*."); ok {
+		return host == suffix || strings.HasSuffix(host, "."+suffix)
+	}
+	return pattern == host
 }
 
 // inject adds the rule's configured Authorization header, reading the secret
