@@ -25,8 +25,9 @@ sandbox-proxy  (holds the real token; default-deny allow-list)
 upstream  (github.com, api.github.com, registry.npmjs.org, …)
 ```
 
-- 🚫 **Default-deny** by `host` (or `allow_all` to open egress while keeping
-  injection scoped).
+- 🌐 **Open by default** (`allow_all: true`) for easy setup — egress to any host,
+  with credentials injected only on your configured hosts. Set `allow_all: false`
+  for strict default-deny (only listed hosts reachable).
 - 🔏 **HTTPS interception** via a CA it generates on first run and the sandbox
   trusts; the intercepted TLS speaks **HTTP/1.1 only** (ALPN pins `http/1.1`),
   and hosts you don't inject into can be blind-tunnelled untouched.
@@ -111,8 +112,9 @@ The sandbox network is created `--internal`, so a sandbox physically cannot
 reach the internet except through the proxy. Confirm:
 
 ```bash
-sandbox run sh -c 'env | grep -i token'    # -> nothing
-sandbox run curl -s https://example.com    # -> 403 unless allow-listed / allow_all
+sandbox run sh -c 'env | grep -i token'    # -> nothing (no token inside the sandbox)
+sandbox run curl -sI https://example.com   # reachable via the proxy (allow_all default);
+                                           # with allow_all:false an unlisted host -> 403
 ```
 
 Override defaults (network/image/volume names, which env vars are forwarded as
@@ -134,7 +136,7 @@ read from the proxy's environment) to **rules** (which host gets which secret):
 
 ```json
 {
-  "allow_all": false,
+  "allow_all": true,
   "secrets": {
     "github":     { "type": "basic",  "env": "GH_TOKEN", "username": "x-access-token" },
     "github-api": { "type": "bearer", "env": "GH_TOKEN" },
@@ -157,11 +159,12 @@ read from the proxy's environment) to **rules** (which host gets which secret):
   any subdomain (and the bare domain) — handy for CDN hosts behind
   gh-release/git-lfs/npm-tarball downloads. `inject` names a secret to add on
   every request; omit it to allow a host with no credential added.
-- **`allow_all`** — `false` (default) is default-deny: only listed hosts are
-  reachable. `true` opens egress to **everything** but still injects only on
-  listed hosts (others are blind-tunnelled, untouched). ⚠️ `allow_all` turns off
-  egress containment — the proxy becomes a credential *broker*, not a firewall,
-  so a compromised workload can send data anywhere. Use it only for trusted code.
+- **`allow_all`** — **`true` by default** for simplicity: egress to any host,
+  with injection still scoped to listed hosts (others are blind-tunnelled,
+  untouched). Set it to `false` for strict default-deny — only listed hosts are
+  reachable. ⚠️ With `allow_all` on, the proxy is a credential *broker*, not a
+  firewall: a compromised workload can send data anywhere. Flip it to `false` for
+  untrusted code.
 
 Run `sandbox proxy reload` to re-read the config.
 
