@@ -1,0 +1,20 @@
+{
+  "allow_all": true,
+  "secrets": {
+    "github": { "type": "basic", "env": "GH_TOKEN", "username": "x-access-token" },
+    "github-api": { "type": "bearer", "env": "GH_TOKEN" },
+    "npm": { "type": "bearer", "env": "NPM_TOKEN" }
+  },
+  "rules": [
+    { "host": "github.com", "inject": "github" },
+    { "host": "api.github.com", "inject": "github-api" },
+    { "host": "codeload.github.com", "inject": "github" },
+
+    { "host": "registry.npmjs.org", "inject": "npm" },
+
+    { "host": "objects.githubusercontent.com" },
+    { "host": "proxy.golang.org" },
+    { "host": "sum.golang.org" },
+    { "host": "storage.googleapis.com" }
+  ]
+}

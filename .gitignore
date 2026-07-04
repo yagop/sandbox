@@ -1,0 +1,7 @@
+# built binary + generated CA (proxy)
+/proxy/src/sandbox-proxy
+/proxy/ca/
+/proxy/src/ca/
+# stray local artifacts
+/ca/
+*.log
