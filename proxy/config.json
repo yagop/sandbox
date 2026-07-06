@@ -13,6 +13,10 @@
 
     { "host": "*.githubusercontent.com" },
 
+    { "host": "*.pkg.github.com", "inject": "github-api" },
+    { "host": "ghcr.io", "inject": "github-api" },
+    { "host": "*.ghcr.io", "inject": "github-api" },
+
     { "host": "registry.npmjs.org", "inject": "npm" },
 
     { "host": "proxy.golang.org" },
