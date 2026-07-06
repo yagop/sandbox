@@ -129,6 +129,20 @@ vanish on exit; for anything you want every time, add it to `sandbox/Dockerfile`
 and `sandbox build box`. Your host `TERM`/`COLORTERM` are forwarded too, so
 full-color TUIs work.
 
+**🔌 Reaching raw-TCP / LAN services:** the proxy only speaks HTTP/HTTPS, but its
+CONNECT/blind-tunnel is a generic TCP splice — so any TCP service is reachable
+via the bundled `forward` (alias `tunnel`) helper, which exposes it on
+`127.0.0.1` through the proxy:
+
+```bash
+forward 192.168.1.39 5432          # 127.0.0.1:5432 -> 192.168.1.39:5432
+forward 192.168.1.39 5432 6379 &   # several ports, backgrounded
+```
+
+Point your client at `127.0.0.1:<port>`. Keep `allow_all` on and don't add a rule
+for the host — a rule would MITM it and break the raw stream. The proxy must be
+able to reach the target on the LAN.
+
 ## ⚙️ Configuration
 
 `proxy/config.json` maps **secrets** (how to build an auth header, with the value

@@ -19,7 +19,7 @@ if [ -z "${SANDBOX_DIR:-}" ]; then
   if [ -n "${BASH_SOURCE:-}" ]; then
     _sbx_self="${BASH_SOURCE[0]}"
   else
-    _sbx_self="$(eval 'echo ${(%):-%N}' 2>/dev/null)" || _sbx_self="$0"
+    eval '_sbx_self=${(%):-%x}' 2>/dev/null || _sbx_self="$0"
   fi
   SANDBOX_DIR="$(cd "$(dirname "$_sbx_self")" && pwd)"
   unset _sbx_self

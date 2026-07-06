@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
         vim \
         ripgrep \
         jq \
+        socat \
         locales \
         ncurses-term \
         zsh \
@@ -84,7 +85,16 @@ RUN set -eu; \
 # node/bun (which use their own bundled trust store, hence NODE_EXTRA_CA_CERTS).
 # The CA is bind-mounted at /ca; entrypoint installs it into the system store.
 COPY entrypoint.sh /usr/local/bin/sandbox-entrypoint.sh
-RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh
+COPY forward.sh /usr/local/bin/forward
+RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh /usr/local/bin/forward \
+    && ln -s forward /usr/local/bin/tunnel
+
+# agent aliases for the interactive sandbox shell (~ expands at use time).
+RUN printf '%s\n' \
+      "alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code --effort xhigh --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'" \
+      "alias codex='bun x @openai/codex --yolo'" \
+      "alias pi='bun x @earendil-works/pi-coding-agent'" \
+      >> /etc/zsh/zshrc
 
 # The proxy is reachable by its container name on the shared network. Set both
 # UPPER and lower case: apt/wget/many tools only read the lowercase variants.
@@ -94,7 +104,8 @@ ENV HTTP_PROXY=http://sandbox-proxy:3128 \
     http_proxy=http://sandbox-proxy:3128 \
     https_proxy=http://sandbox-proxy:3128 \
     no_proxy=localhost,127.0.0.1 \
-    NODE_EXTRA_CA_CERTS=/ca/ca.crt
+    NODE_EXTRA_CA_CERTS=/ca/ca.crt \
+    NODE_USE_ENV_PROXY=1
 # NOTE: the gh placeholder token is set in entrypoint.sh, not here, to avoid
 # Docker's SecretsUsedInArgOrEnv warning (it flags any ENV named *TOKEN*).
 
