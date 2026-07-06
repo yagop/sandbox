@@ -8,6 +8,7 @@
   "rules": [
     { "host": "github.com", "inject": "github" },
     { "host": "api.github.com", "inject": "github-api" },
+    { "host": "uploads.github.com", "inject": "github-api" },
     { "host": "codeload.github.com", "inject": "github" },
 
     { "host": "*.githubusercontent.com" },
