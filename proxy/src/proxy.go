@@ -91,10 +91,11 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 	ln := newOneShotListener(tlsConn)
 	srv := &http.Server{
 		Handler:           interceptHandler(r.Host),
-		ReadHeaderTimeout: 10 * time.Second,   // slow-loris guard
-		ReadTimeout:       60 * time.Second,   // whole-request read bound
-		WriteTimeout:      30 * time.Minute,   // allow long streaming (git clone, SSE)
-		IdleTimeout:       2 * time.Minute,    // cap idle keep-alives
+		ReadHeaderTimeout: 10 * time.Second, // slow-loris guard (headers only)
+		// No whole-request ReadTimeout: it would cap large/slow uploads. The
+		// header guard above plus IdleTimeout bound the abuse cases.
+		WriteTimeout: 30 * time.Minute, // allow long streaming (git clone, SSE)
+		IdleTimeout:  2 * time.Minute,  // cap idle keep-alives
 		ConnState: func(_ net.Conn, s http.ConnState) {
 			if s == http.StateClosed || s == http.StateHijacked {
 				ln.Close()
@@ -186,8 +187,10 @@ var upstream = &http.Transport{
 	// Chain through an upstream proxy if the host sets HTTP(S)_PROXY (corporate
 	// egress, nested sandboxes); dials directly otherwise.
 	Proxy:                 http.ProxyFromEnvironment,
-	TLSHandshakeTimeout:   10 * time.Second,
-	ResponseHeaderTimeout: 30 * time.Second,
+	TLSHandshakeTimeout: 10 * time.Second,
+	// Generous: the upstream may take a while to respond after a large upload
+	// body is fully sent (it stores/processes it before replying).
+	ResponseHeaderTimeout: 5 * time.Minute,
 	// HTTP/2 upstreams are fine now: we relay through a ResponseWriter which
 	// re-frames as HTTP/1.1, so no need to force http/1.1 here.
 }
