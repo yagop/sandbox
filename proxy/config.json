@@ -5,7 +5,10 @@
     "github-api": { "type": "bearer", "env": "GH_TOKEN" },
     "npm": { "type": "bearer", "env": "NPM_TOKEN" },
     "scaleway": { "type": "header", "env": "SCW_SECRET_KEY", "header": "X-Auth-Token" },
-    "scaleway-registry": { "type": "basic", "env": "SCW_SECRET_KEY", "username": "nologin" }
+    "scaleway-registry": { "type": "basic", "env": "SCW_SECRET_KEY", "username": "nologin" },
+    "scaleway-cockpit-fr-par": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_FR_PAR" },
+    "scaleway-cockpit-nl-ams": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_NL_AMS" },
+    "scaleway-cockpit-pl-waw": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_PL_WAW" }
   },
   "rules": [
     { "host": "github.com", "inject": "github" },
@@ -25,6 +28,9 @@
     { "host": "rg.fr-par.scw.cloud", "inject": "scaleway-registry" },
     { "host": "rg.nl-ams.scw.cloud", "inject": "scaleway-registry" },
     { "host": "rg.pl-waw.scw.cloud", "inject": "scaleway-registry" },
+    { "host": "*.logs.cockpit.fr-par.scw.cloud", "inject": "scaleway-cockpit-fr-par" },
+    { "host": "*.logs.cockpit.nl-ams.scw.cloud", "inject": "scaleway-cockpit-nl-ams" },
+    { "host": "*.logs.cockpit.pl-waw.scw.cloud", "inject": "scaleway-cockpit-pl-waw" },
 
     { "host": "proxy.golang.org" },
     { "host": "sum.golang.org" },

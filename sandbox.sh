@@ -36,7 +36,7 @@ fi
 : "${SANDBOX_PROXY_IMAGE:=sandbox-proxy:latest}"
 : "${SANDBOX_BOX_IMAGE:=sandbox-box:latest}"
 # Which env vars to forward into the proxy (the secrets your rules reference):
-: "${SANDBOX_SECRET_ENVS:=GH_TOKEN NPM_TOKEN SCW_SECRET_KEY}"
+: "${SANDBOX_SECRET_ENVS:=GH_TOKEN NPM_TOKEN SCW_SECRET_KEY SCW_COCKPIT_TOKEN_FR_PAR SCW_COCKPIT_TOKEN_NL_AMS SCW_COCKPIT_TOKEN_PL_WAW}"
 # For any secret VAR that isn't set in the environment, SANDBOX_<VAR>_CMD (if
 # defined) is run on the host to obtain it. Default: get GH_TOKEN from gh.
 : "${SANDBOX_GH_TOKEN_CMD:=gh auth token}"

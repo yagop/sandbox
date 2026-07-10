@@ -78,11 +78,18 @@ Commands:
 | `sandbox build [proxy\|box\|all]` | Force-rebuild images. |
 | `sandbox ps` | List running sandboxes. |
 
-**🔑 Where secrets come from:** for each var in `$SANDBOX_SECRET_ENVS` (default
-`GH_TOKEN NPM_TOKEN SCW_SECRET_KEY`), `sandbox` uses the environment value if
-set, otherwise
-runs `SANDBOX_<VAR>_CMD` on the host. `GH_TOKEN` defaults to `gh auth token`, so
-just being logged into `gh` is enough — no need to export anything. Resolution
+**🔑 Where secrets come from:** for each var in `$SANDBOX_SECRET_ENVS`,
+`sandbox` uses the environment value if set, otherwise runs
+`SANDBOX_<VAR>_CMD` on the host. The default set:
+
+```bash
+GH_TOKEN                    # defaults to `gh auth token` — being logged into gh is enough
+NPM_TOKEN
+SCW_SECRET_KEY
+SCW_COCKPIT_TOKEN_<REGION>  # one per Cockpit region (FR_PAR, NL_AMS, PL_WAW) — tokens are region-scoped
+```
+
+Resolution
 happens in a subshell at proxy up/reload, so tokens never persist in your shell,
 and they're passed to the container by name (never on the command line). To pull
 another secret from a command, e.g.:
