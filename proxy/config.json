@@ -3,7 +3,9 @@
   "secrets": {
     "github": { "type": "basic", "env": "GH_TOKEN", "username": "x-access-token" },
     "github-api": { "type": "bearer", "env": "GH_TOKEN" },
-    "npm": { "type": "bearer", "env": "NPM_TOKEN" }
+    "npm": { "type": "bearer", "env": "NPM_TOKEN" },
+    "scaleway": { "type": "header", "env": "SCW_SECRET_KEY", "header": "X-Auth-Token" },
+    "scaleway-registry": { "type": "basic", "env": "SCW_SECRET_KEY", "username": "nologin" }
   },
   "rules": [
     { "host": "github.com", "inject": "github" },
@@ -18,6 +20,11 @@
     { "host": "*.ghcr.io", "inject": "github-api" },
 
     { "host": "registry.npmjs.org", "inject": "npm" },
+
+    { "host": "api.scaleway.com", "inject": "scaleway" },
+    { "host": "rg.fr-par.scw.cloud", "inject": "scaleway-registry" },
+    { "host": "rg.nl-ams.scw.cloud", "inject": "scaleway-registry" },
+    { "host": "rg.pl-waw.scw.cloud", "inject": "scaleway-registry" },
 
     { "host": "proxy.golang.org" },
     { "host": "sum.golang.org" },

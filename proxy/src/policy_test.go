@@ -97,6 +97,29 @@ func TestInjectBasicDefaultUser(t *testing.T) {
 	}
 }
 
+func TestInjectCustomHeader(t *testing.T) {
+	config = Config{Secrets: map[string]Secret{"s": {Type: "header", EnvVar: "TOK", Header: "X-Auth-Token"}}}
+	t.Setenv("TOK", "scw-secret")
+	req, _ := http.NewRequest("GET", "https://x/", nil)
+	inject(req, &Rule{Inject: "s"})
+	if got := req.Header.Get("X-Auth-Token"); got != "scw-secret" {
+		t.Fatalf("header: got %q", got)
+	}
+	if got := req.Header.Get("Authorization"); got != "" {
+		t.Fatalf("authorization should be untouched, got %q", got)
+	}
+}
+
+func TestInjectHeaderTypeWithoutNameIsNoop(t *testing.T) {
+	config = Config{Secrets: map[string]Secret{"s": {Type: "header", EnvVar: "TOK"}}}
+	t.Setenv("TOK", "v")
+	req, _ := http.NewRequest("GET", "https://x/", nil)
+	inject(req, &Rule{Inject: "s"})
+	if len(req.Header) != 0 {
+		t.Fatalf("expected no headers set, got %v", req.Header)
+	}
+}
+
 func TestInjectOverwritesPlaceholder(t *testing.T) {
 	config = Config{Secrets: map[string]Secret{"s": {Type: "bearer", EnvVar: "TOK"}}}
 	t.Setenv("TOK", "real")

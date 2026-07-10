@@ -79,7 +79,8 @@ Commands:
 | `sandbox ps` | List running sandboxes. |
 
 **🔑 Where secrets come from:** for each var in `$SANDBOX_SECRET_ENVS` (default
-`GH_TOKEN NPM_TOKEN`), `sandbox` uses the environment value if set, otherwise
+`GH_TOKEN NPM_TOKEN SCW_SECRET_KEY`), `sandbox` uses the environment value if
+set, otherwise
 runs `SANDBOX_<VAR>_CMD` on the host. `GH_TOKEN` defaults to `gh auth token`, so
 just being logged into `gh` is enough — no need to export anything. Resolution
 happens in a subshell at proxy up/reload, so tokens never persist in your shell,
@@ -154,20 +155,24 @@ read from the proxy's environment) to **rules** (which host gets which secret):
   "secrets": {
     "github":     { "type": "basic",  "env": "GH_TOKEN", "username": "x-access-token" },
     "github-api": { "type": "bearer", "env": "GH_TOKEN" },
-    "npm":        { "type": "bearer", "env": "NPM_TOKEN" }
+    "npm":        { "type": "bearer", "env": "NPM_TOKEN" },
+    "scaleway":   { "type": "header", "env": "SCW_SECRET_KEY", "header": "X-Auth-Token" }
   },
   "rules": [
     { "host": "github.com",              "inject": "github" },
     { "host": "api.github.com",          "inject": "github-api" },
     { "host": "*.githubusercontent.com" },
-    { "host": "registry.npmjs.org",      "inject": "npm" }
+    { "host": "registry.npmjs.org",      "inject": "npm" },
+    { "host": "api.scaleway.com",        "inject": "scaleway" }
   ]
 }
 ```
 
-- **secrets** — `type` is `bearer` or `basic`; `env` names the host env var
-  holding the token (never the value itself). `username` is for basic auth
-  (GitHub uses the token as the *password* with any username).
+- **secrets** — `type` is `bearer`, `basic`, or `header`; `env` names the host
+  env var holding the token (never the value itself). `username` is for basic
+  auth (GitHub uses the token as the *password* with any username). `header`
+  sets the token in a custom header named by `header` — e.g. Scaleway's
+  `X-Auth-Token`.
 - **rules** — matched by `host`, covering all methods and paths. A `*.` prefix
   is a suffix wildcard: `*.githubusercontent.com` matches `objects.` / `raw.` /
   any subdomain (and the bare domain) — handy for CDN hosts behind

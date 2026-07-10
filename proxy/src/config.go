@@ -15,9 +15,10 @@ type Rule struct {
 // Secret describes how to build an Authorization header. The actual value is
 // read from the proxy's environment (EnvVar) so tokens live only on the host.
 type Secret struct {
-	Type     string `json:"type"`     // "bearer" or "basic"
-	EnvVar   string `json:"env"`      // env var holding token (bearer) or password (basic)
+	Type     string `json:"type"`     // "bearer", "basic", or "header"
+	EnvVar   string `json:"env"`      // env var holding token (bearer/header) or password (basic)
 	Username string `json:"username"` // for basic auth (git-over-https uses any non-empty user)
+	Header   string `json:"header"`   // for type "header": header name, e.g. "X-Auth-Token"
 }
 
 type Config struct {

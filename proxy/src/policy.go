@@ -52,6 +52,12 @@ func inject(req *http.Request, ru *Rule) {
 			user = "x-access-token" // GitHub convention for token-as-password
 		}
 		req.SetBasicAuth(user, val)
+	case "header":
+		if s.Header == "" {
+			log.Printf("WARN secret %q: type header requires a header name", ru.Inject)
+			return
+		}
+		req.Header.Set(s.Header, val)
 	default:
 		log.Printf("WARN secret %q: unknown type %q", ru.Inject, s.Type)
 	}
