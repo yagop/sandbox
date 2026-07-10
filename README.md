@@ -37,7 +37,10 @@ upstream  (github.com, api.github.com, registry.npmjs.org, …)
 ## 🚀 Usage: the `sandbox` command
 
 Source the control script once; it gives you a `sandbox` function that manages
-**one shared proxy** and **any number of sandbox containers**.
+**one shared proxy** and **any number of sandbox containers**. The function
+re-sources `sandbox.sh` on every call, so edits to it take effect immediately —
+no need to `source` again (new *default* values of `SANDBOX_*` vars are the
+exception: those stick per shell once set).
 
 ```bash
 source sandbox.sh

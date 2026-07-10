@@ -272,6 +272,12 @@ EOF
 
 # --- dispatcher ---------------------------------------------------------------
 sandbox() {
+  # Self-reload: re-source this file on every call so edits take effect without
+  # having to remember to `source sandbox.sh`. Sourcing only (re)defines
+  # functions and defaults — it calls nothing, so no recursion. Note the
+  # `: "${VAR:=...}"` defaults keep values already set in this shell, so an
+  # edited *default* still needs a new shell (or an export) to apply.
+  [ -f "$SANDBOX_DIR/sandbox.sh" ] && . "$SANDBOX_DIR/sandbox.sh"
   local cmd="${1:-help}"
   [ $# -gt 0 ] && shift
   case "$cmd" in
