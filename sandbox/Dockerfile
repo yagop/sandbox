@@ -108,7 +108,7 @@ RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh /usr/local/bin/forward \
 
 # agent aliases for the interactive sandbox shell (~ expands at use time).
 RUN printf '%s\n' \
-      "alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code --effort high --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'" \
+      "alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code --model fable-5 --effort low --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'" \
       "alias codex='bun x @openai/codex --yolo'" \
       "alias pi='bun x @earendil-works/pi-coding-agent'" \
       >> /etc/zsh/zshrc
