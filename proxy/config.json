@@ -8,7 +8,9 @@
     "scaleway-registry": { "type": "basic", "env": "SCW_SECRET_KEY", "username": "nologin" },
     "scaleway-cockpit-fr-par": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_FR_PAR" },
     "scaleway-cockpit-nl-ams": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_NL_AMS" },
-    "scaleway-cockpit-pl-waw": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_PL_WAW" }
+    "scaleway-cockpit-pl-waw": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_PL_WAW" },
+    "fly": { "type": "bearer", "env": "FLY_API_TOKEN" },
+    "fly-registry": { "type": "basic", "env": "FLY_API_TOKEN", "username": "x" }
   },
   "rules": [
     { "host": "github.com", "inject": "github" },
@@ -31,6 +33,10 @@
     { "host": "*.logs.cockpit.fr-par.scw.cloud", "inject": "scaleway-cockpit-fr-par" },
     { "host": "*.logs.cockpit.nl-ams.scw.cloud", "inject": "scaleway-cockpit-nl-ams" },
     { "host": "*.logs.cockpit.pl-waw.scw.cloud", "inject": "scaleway-cockpit-pl-waw" },
+
+    { "host": "api.fly.io", "inject": "fly" },
+    { "host": "api.machines.dev", "inject": "fly" },
+    { "host": "registry.fly.io", "inject": "fly-registry" },
 
     { "host": "proxy.golang.org" },
     { "host": "sum.golang.org" },

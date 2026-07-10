@@ -36,10 +36,12 @@ fi
 : "${SANDBOX_PROXY_IMAGE:=sandbox-proxy:latest}"
 : "${SANDBOX_BOX_IMAGE:=sandbox-box:latest}"
 # Which env vars to forward into the proxy (the secrets your rules reference):
-: "${SANDBOX_SECRET_ENVS:=GH_TOKEN NPM_TOKEN SCW_SECRET_KEY SCW_COCKPIT_TOKEN_FR_PAR SCW_COCKPIT_TOKEN_NL_AMS SCW_COCKPIT_TOKEN_PL_WAW}"
+: "${SANDBOX_SECRET_ENVS:=GH_TOKEN NPM_TOKEN SCW_SECRET_KEY SCW_COCKPIT_TOKEN_FR_PAR SCW_COCKPIT_TOKEN_NL_AMS SCW_COCKPIT_TOKEN_PL_WAW FLY_API_TOKEN}"
 # For any secret VAR that isn't set in the environment, SANDBOX_<VAR>_CMD (if
-# defined) is run on the host to obtain it. Default: get GH_TOKEN from gh.
+# defined) is run on the host to obtain it. Defaults: get GH_TOKEN from gh and
+# FLY_API_TOKEN from flyctl.
 : "${SANDBOX_GH_TOKEN_CMD:=gh auth token}"
+: "${SANDBOX_FLY_API_TOKEN_CMD:=fly auth token}"
 
 # Extra volumes mounted into every `sandbox run`, whitespace-separated docker -v
 # specs. Persist tool configs across sandboxes here, e.g.:

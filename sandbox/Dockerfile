@@ -81,6 +81,23 @@ RUN set -eu; \
     rm /tmp/gh.tgz; \
     gh --version
 
+# flyctl (fly.io CLI) — latest release, resolved via the GitHub API.
+RUN set -eu; \
+    case "$(dpkg --print-architecture)" in \
+        amd64) fly_arch=x86_64 ;; \
+        arm64) fly_arch=arm64 ;; \
+        *) echo "unsupported arch for flyctl" >&2; exit 1 ;; \
+    esac; \
+    url="$(curl -fsSL https://api.github.com/repos/superfly/flyctl/releases/latest \
+        | jq -r --arg suf "_Linux_${fly_arch}.tar.gz" '.assets[] | select(.name|endswith($suf)) | .browser_download_url')"; \
+    test -n "$url"; \
+    curl -fsSL "$url" -o /tmp/fly.tgz; \
+    tar -xzf /tmp/fly.tgz -C /tmp flyctl; \
+    install -m 0755 /tmp/flyctl /usr/local/bin/flyctl; \
+    ln -s flyctl /usr/local/bin/fly; \
+    rm /tmp/fly.tgz /tmp/flyctl; \
+    flyctl version
+
 # Trust the proxy CA so TLS interception is transparent to git/curl/go, and to
 # node/bun (which use their own bundled trust store, hence NODE_EXTRA_CA_CERTS).
 # The CA is bind-mounted at /ca; entrypoint installs it into the system store.

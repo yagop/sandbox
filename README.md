@@ -86,6 +86,7 @@ Commands:
 GH_TOKEN                    # defaults to `gh auth token` — being logged into gh is enough
 NPM_TOKEN
 SCW_SECRET_KEY
+FLY_API_TOKEN               # defaults to `fly auth token`
 SCW_COCKPIT_TOKEN_<REGION>  # one per Cockpit region (FR_PAR, NL_AMS, PL_WAW) — tokens are region-scoped
 ```
 
