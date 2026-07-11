@@ -1,0 +1,7 @@
+# Sandbox shell setup, sourced from /etc/zsh/zshrc. Edit here (not the
+# Dockerfile) and rebuild with: sandbox build box
+
+# agent aliases (~ expands at use time).
+alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code@latest --model claude-fable-5 --effort low --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'
+alias codex='bun x @openai/codex@latest --yolo'
+alias pi='bun x @earendil-works/pi-coding-agent@latest'

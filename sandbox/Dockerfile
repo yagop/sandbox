@@ -106,12 +106,10 @@ COPY forward.sh /usr/local/bin/forward
 RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh /usr/local/bin/forward \
     && ln -s forward /usr/local/bin/tunnel
 
-# agent aliases for the interactive sandbox shell (~ expands at use time).
-RUN printf '%s\n' \
-      "alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code@latest --model claude-fable-5 --effort low --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'" \
-      "alias codex='bun x @openai/codex@latest --yolo'" \
-      "alias pi='bun x @earendil-works/pi-coding-agent@latest'" \
-      >> /etc/zsh/zshrc
+# Shell setup (agent aliases, ...) lives in its own file so it's editable
+# without touching the Dockerfile; sourced from the system zshrc.
+COPY zshrc.sandbox /etc/zsh/zshrc.sandbox
+RUN echo 'source /etc/zsh/zshrc.sandbox' >> /etc/zsh/zshrc
 
 # The proxy is reachable by its container name on the shared network. Set both
 # UPPER and lower case: apt/wget/many tools only read the lowercase variants.

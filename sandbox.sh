@@ -57,6 +57,13 @@ fi
 #   export SANDBOX_VOLUMES="claude-config:/root/.claude codex-config:/root/.codex pi-config:/root/.pi"
 : "${SANDBOX_VOLUMES:=}"
 
+# Env vars set in every sandbox container, whitespace-separated docker -e specs
+# (NAME=value, or bare NAME to forward from the host). Defaults are placeholder
+# tokens so gh/fly actually send requests — the proxy swaps in the real values
+# on the way out. Set as container env (not entrypoint exports) so shells opened
+# via `docker exec` see them too. Never put real secrets here.
+: "${SANDBOX_ENVS:=GH_TOKEN=dummy FLY_API_TOKEN=dummy}"
+
 # --- internals ----------------------------------------------------------------
 _sbx_have_docker() {
   command -v docker >/dev/null 2>&1 || { echo "sandbox: docker not found in PATH" >&2; return 1; }
@@ -240,19 +247,19 @@ _sbx_run() {
         --label sandbox.role=box
         --network "$SANDBOX_NET"
         -e "TERM=${TERM:-xterm-256color}" -e COLORTERM
-        # Placeholder tokens as container env (not just entrypoint exports) so
-        # `docker exec` shells also see them; the proxy injects the real values.
-        -e GH_TOKEN=dummy -e FLY_API_TOKEN=dummy
         -v "$SANDBOX_CACERT_FILE:/ca/ca.crt:ro"
         -v "$PWD:$wd" -w "$wd")
 
-  # Extra persistent volumes (tool configs, caches, ...). Each entry in
-  # SANDBOX_VOLUMES is a docker -v spec, e.g. "claude-config:/root/.claude".
-  if [ -n "${SANDBOX_VOLUMES:-}" ]; then
+  # Extra persistent volumes (tool configs, caches, ...) and env vars. Each
+  # entry is a raw docker -v / -e spec (see SANDBOX_VOLUMES / SANDBOX_ENVS).
+  if [ -n "${SANDBOX_VOLUMES:-}${SANDBOX_ENVS:-}" ]; then
     [ -n "${ZSH_VERSION:-}" ] && setopt localoptions shwordsplit
-    local vol
-    for vol in $SANDBOX_VOLUMES; do
-      args+=(-v "$vol")
+    local spec
+    for spec in $SANDBOX_VOLUMES; do
+      args+=(-v "$spec")
+    done
+    for spec in $SANDBOX_ENVS; do
+      args+=(-e "$spec")
     done
   fi
 
