@@ -108,9 +108,9 @@ RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh /usr/local/bin/forward \
 
 # agent aliases for the interactive sandbox shell (~ expands at use time).
 RUN printf '%s\n' \
-      "alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code --model fable-5 --effort low --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'" \
-      "alias codex='bun x @openai/codex --yolo'" \
-      "alias pi='bun x @earendil-works/pi-coding-agent'" \
+      "alias claude='IS_SANDBOX=1 bun x @anthropic-ai/claude-code@latest --model claude-fable-5 --effort low --dangerously-skip-permissions --append-system-prompt ~/.claude/USER.md'" \
+      "alias codex='bun x @openai/codex@latest --yolo'" \
+      "alias pi='bun x @earendil-works/pi-coding-agent@latest'" \
       >> /etc/zsh/zshrc
 
 # The proxy is reachable by its container name on the shared network. Set both
