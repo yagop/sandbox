@@ -107,9 +107,11 @@ RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh /usr/local/bin/forward \
     && ln -s forward /usr/local/bin/tunnel
 
 # Shell setup (agent aliases, ...) lives in its own file so it's editable
-# without touching the Dockerfile; sourced from the system zshrc.
+# without touching the Dockerfile; sourced by both zsh and bash interactive
+# shells (so `docker exec ... /bin/bash` gets the aliases too).
 COPY zshrc.sandbox /etc/zsh/zshrc.sandbox
-RUN echo 'source /etc/zsh/zshrc.sandbox' >> /etc/zsh/zshrc
+RUN echo 'source /etc/zsh/zshrc.sandbox' >> /etc/zsh/zshrc \
+    && echo '. /etc/zsh/zshrc.sandbox' >> /etc/bash.bashrc
 
 # The proxy is reachable by its container name on the shared network. Set both
 # UPPER and lower case: apt/wget/many tools only read the lowercase variants.
