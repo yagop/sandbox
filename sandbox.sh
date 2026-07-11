@@ -240,6 +240,9 @@ _sbx_run() {
         --label sandbox.role=box
         --network "$SANDBOX_NET"
         -e "TERM=${TERM:-xterm-256color}" -e COLORTERM
+        # Placeholder tokens as container env (not just entrypoint exports) so
+        # `docker exec` shells also see them; the proxy injects the real values.
+        -e GH_TOKEN=dummy -e FLY_API_TOKEN=dummy
         -v "$SANDBOX_CACERT_FILE:/ca/ca.crt:ro"
         -v "$PWD:$wd" -w "$wd")
 
