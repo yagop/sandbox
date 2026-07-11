@@ -11,7 +11,9 @@
 #   sandbox ps               # list running sandbox containers
 #
 # One proxy is shared by every sandbox. Sandboxes sit on an internal Docker
-# network with no route to the internet except through the proxy. Tokens
+# network; HTTP(S) goes through the proxy (which injects credentials), and with
+# SANDBOX_OPEN_NET=1 (default) other traffic egresses directly. Set
+# SANDBOX_OPEN_NET=0 to make the proxy the only route out. Tokens
 # (GH_TOKEN, NPM_TOKEN, ...) live ONLY in the proxy container's environment.
 
 # --- resolve where this script lives (bash or zsh), overridable ---------------
@@ -42,6 +44,13 @@ fi
 # FLY_API_TOKEN from flyctl.
 : "${SANDBOX_GH_TOKEN_CMD:=gh auth token}"
 : "${SANDBOX_FLY_API_TOKEN_CMD:=fly auth token}"
+
+# Open network: when 1 (default), sandboxes are ALSO attached to the egress
+# network, so traffic that doesn't go through the proxy (raw TCP, ssh, db
+# connections, ...) reaches the internet directly. HTTP(S) still goes through
+# the proxy via HTTP(S)_PROXY for header/credential injection. Set to 0 for
+# strict isolation where the proxy is the only way out.
+: "${SANDBOX_OPEN_NET:=1}"
 
 # Extra volumes mounted into every `sandbox run`, whitespace-separated docker -v
 # specs. Persist tool configs across sandboxes here, e.g.:
@@ -223,8 +232,10 @@ _sbx_run() {
 
   # Build argv as an array (portable across bash/zsh; no word-split surprises).
   # Mount ONLY ca.crt (read-only) — never the CA volume, so ca.key stays in the proxy.
+  # create+start (not run) so the egress network can be attached before the
+  # workload boots when SANDBOX_OPEN_NET=1 — docker run takes only one --network.
   local -a args
-  args=(run --rm -it
+  args=(create --rm -it
         --name "sandbox-$base-$tag"
         --label sandbox.role=box
         --network "$SANDBOX_NET"
@@ -243,7 +254,13 @@ _sbx_run() {
   fi
 
   args+=("$SANDBOX_BOX_IMAGE" "$@")
-  docker "${args[@]}"
+  local cid
+  cid="$(docker "${args[@]}")" || return 1
+  if [ "${SANDBOX_OPEN_NET}" = "1" ]; then
+    docker network connect "$SANDBOX_EGRESS" "$cid" >/dev/null 2>&1 \
+      || echo "sandbox: warning: could not attach $SANDBOX_EGRESS (open net disabled for this run)" >&2
+  fi
+  docker start -ai "$cid"
 }
 
 _sbx_ps() {
@@ -267,6 +284,10 @@ sandbox — run code in an isolated container that reaches the network only
   sandbox ps                 list running sandboxes
 
 Secrets are forwarded into the proxy from these env vars: $SANDBOX_SECRET_ENVS
+
+SANDBOX_OPEN_NET=1 (default) also gives sandboxes direct egress for traffic
+that doesn't use the proxy (raw TCP, ssh, databases). Set SANDBOX_OPEN_NET=0
+to make the proxy the only network path.
 EOF
 }
 

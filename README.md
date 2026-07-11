@@ -9,9 +9,11 @@ driven by a single script (`sandbox.sh`) over a dependency-free proxy binary you
 
 ## 🔒 What it does
 
-Code runs in a container with **no network access except through the proxy**.
+Code runs in a container whose **HTTP(S) traffic goes through the proxy**.
 The proxy holds your tokens and injects them into outbound requests as they
-leave — so the workload can *use* them but never *sees* them.
+leave — so the workload can *use* them but never *sees* them. Other traffic
+(raw TCP, ssh, ...) egresses directly by default; set `SANDBOX_OPEN_NET=0`
+to make the proxy the only route out.
 
 ```
 sandbox  (git / gh / npm — no token; HTTPS_PROXY, trusts proxy CA)
@@ -120,8 +122,12 @@ source, then `sandbox proxy reload` — it re-resolves secrets (picking up a
 rotated `gh` token) and restarts. The CA is stored in a persistent Docker
 volume, so it survives reloads and sandboxes keep trusting it.
 
-The sandbox network is created `--internal`, so a sandbox physically cannot
-reach the internet except through the proxy. Confirm:
+The sandbox network is created `--internal`. By default (`SANDBOX_OPEN_NET=1`)
+each sandbox is *also* attached to the egress network, so traffic that doesn't
+use the proxy (raw TCP, ssh, database connections, ...) reaches the internet
+directly, while HTTP(S) keeps going through the proxy for credential injection.
+Export `SANDBOX_OPEN_NET=0` before `sandbox run` for strict isolation, where
+the proxy is physically the only route out. Confirm:
 
 ```bash
 sandbox run sh -c 'env | grep -i token'    # -> nothing (no token inside the sandbox)
@@ -246,7 +252,10 @@ built binary.
   volume private on the host.
 - **Lock down the network**, not just the env. The `--internal` sandbox network
   (`sandbox-net`) is what actually forces traffic through the proxy; without it a
-  workload could ignore `HTTPS_PROXY` and dial out directly. `sandbox.sh` creates
-  it internal by default.
+  workload could ignore `HTTPS_PROXY` and dial out directly. Note the default
+  `SANDBOX_OPEN_NET=1` deliberately relaxes this by also attaching sandboxes to
+  the egress network — convenient for raw TCP, but a workload can then bypass
+  the proxy entirely. Export `SANDBOX_OPEN_NET=0` when you want enforced
+  proxy-only egress.
 - **Scope tightly.** Prefer specific injection hosts over broad `allow_all` so a
   leaked-but-injected token is useful only for what you intended.
