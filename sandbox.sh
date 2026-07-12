@@ -57,12 +57,11 @@ fi
 #   export SANDBOX_VOLUMES="claude-config:/root/.claude codex-config:/root/.codex pi-config:/root/.pi"
 : "${SANDBOX_VOLUMES:=}"
 
-# Env vars set in every sandbox container, whitespace-separated docker -e specs
-# (NAME=value, or bare NAME to forward from the host). Defaults are placeholder
-# tokens so gh/fly actually send requests — the proxy swaps in the real values
-# on the way out. Set as container env (not entrypoint exports) so shells opened
-# via `docker exec` see them too. Never put real secrets here.
-: "${SANDBOX_ENVS:=GH_TOKEN=dummy FLY_API_TOKEN=dummy}"
+# Extra env vars set in every sandbox container, whitespace-separated docker -e
+# specs (NAME=value, or bare NAME to forward from the host). Placeholder tokens
+# (GH_TOKEN, FLY_API_TOKEN) are already baked into the image as ENV. Never put
+# real secrets here — those belong in the proxy.
+: "${SANDBOX_ENVS:=}"
 
 # --- internals ----------------------------------------------------------------
 _sbx_have_docker() {

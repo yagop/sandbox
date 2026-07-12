@@ -21,15 +21,6 @@ git config --global http.proxy "$HTTPS_PROXY" 2>/dev/null || true
 # npm reads the proxy from env automatically; pin the registry to https.
 npm config set //registry.npmjs.org/:_authToken=dummy >/dev/null 2>&1 || true
 
-# Placeholder tokens so gh/fly (and tools that gate on a local token) actually
-# send requests; the proxy overwrites them with the real token on the wire.
-# Normally already set as container env via SANDBOX_ENVS in sandbox.sh (so
-# `docker exec` shells see them too); this is a fallback for running the image
-# directly. Kept out of the Dockerfile so a *TOKEN* ENV doesn't trip Docker's
-# SecretsUsedInArgOrEnv build warning.
-export GH_TOKEN="${GH_TOKEN:-dummy}"
-export FLY_API_TOKEN="${FLY_API_TOKEN:-dummy}"
-
 # Claude Code keeps ~/.claude.json OUTSIDE the persisted ~/.claude directory, so
 # it is otherwise lost across --rm sandboxes. When ~/.claude is a mounted volume,
 # relocate the file into it (once) and symlink, so app state (MCP servers, trust

@@ -1,5 +1,10 @@
-# Sandbox workload image: a general Ubuntu dev environment that reaches the
-# network ONLY through the proxy, and trusts the proxy's CA.
+# syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
+# ^ the *TOKEN* ENVs below are placeholder values (the proxy injects the real
+#   credentials on the wire), so the secrets-in-env build check is a false alarm.
+
+# Sandbox workload image: a general Ubuntu dev environment whose HTTP(S)
+# traffic goes through the proxy, and which trusts the proxy's CA.
 FROM ubuntu:26.04
 
 # ARG (not ENV): keeps apt non-interactive during the build without leaking
@@ -123,8 +128,13 @@ ENV HTTP_PROXY=http://sandbox-proxy:3128 \
     no_proxy=localhost,127.0.0.1 \
     NODE_EXTRA_CA_CERTS=/ca/ca.crt \
     NODE_USE_ENV_PROXY=1
-# NOTE: the gh placeholder token is set in entrypoint.sh, not here, to avoid
-# Docker's SecretsUsedInArgOrEnv warning (it flags any ENV named *TOKEN*).
+
+# Placeholder tokens so gh/fly (and tools that gate on a local token) actually
+# send requests; the proxy overwrites them with the real credential on the way
+# out. Image ENV so every process — main, `docker exec`, raw `docker run` —
+# sees them. Override per-run with SANDBOX_ENVS if needed.
+ENV GH_TOKEN=dummy \
+    FLY_API_TOKEN=dummy
 
 ENTRYPOINT ["sandbox-entrypoint.sh"]
 CMD ["zsh"]

@@ -117,12 +117,13 @@ Each entry is a raw `-v` spec, so host paths (`$HOME/.foo:/root/.foo`) and
 read-only mounts (`somevol:/root/.x:ro`) work too. Note these are shared across
 all sandboxes, so treat anything mounted there as readable by any workload.
 
-**🔧 Env vars in sandboxes:** `SANDBOX_ENVS` is a whitespace-separated list of
-docker `-e` specs set in every sandbox (`NAME=value`, or bare `NAME` to forward
-from the host). It defaults to the placeholder tokens
-`GH_TOKEN=dummy FLY_API_TOKEN=dummy` — never put real secrets here; those
-belong in the proxy. Shell aliases and interactive setup live in
-`sandbox/zshrc.sandbox` (baked into the image; `sandbox build box` after edits).
+**🔧 Env vars in sandboxes:** one owner per concern — static env (proxy vars,
+locale, placeholder tokens like `GH_TOKEN=dummy`) is image `ENV` in
+`sandbox/Dockerfile`; per-run extras go in `SANDBOX_ENVS`, a whitespace-separated
+list of docker `-e` specs (`NAME=value`, or bare `NAME` to forward from the
+host) — never real secrets, those belong in the proxy. Shell aliases and
+interactive setup live in `sandbox/zshrc.sandbox` (baked into the image;
+`sandbox build box` after edits).
 
 **♻️ Changing tokens or rules:** edit `proxy/config.json` and/or update the token
 source, then `sandbox proxy reload` — it re-resolves secrets (picking up a
