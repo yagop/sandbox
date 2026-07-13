@@ -21,7 +21,9 @@ RUN apt-get update && apt-get install -y \
         ca-certificates \
         curl \
         git \
-        golang-go \
+        golang \
+        python3 \
+        rust-all \
         man-db \
         manpages \
         file \
