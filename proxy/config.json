@@ -6,6 +6,7 @@
     "npm": { "type": "bearer", "env": "NPM_TOKEN" },
     "scaleway": { "type": "header", "env": "SCW_SECRET_KEY", "header": "X-Auth-Token" },
     "scaleway-registry": { "type": "basic", "env": "SCW_SECRET_KEY", "username": "nologin" },
+    "scaleway-ai": { "type": "bearer", "env": "SCW_SECRET_KEY" },
     "scaleway-cockpit-fr-par": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_FR_PAR" },
     "scaleway-cockpit-nl-ams": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_NL_AMS" },
     "scaleway-cockpit-pl-waw": { "type": "bearer", "env": "SCW_COCKPIT_TOKEN_PL_WAW" },
@@ -25,8 +26,10 @@
     { "host": "*.ghcr.io", "inject": "github-api" },
 
     { "host": "registry.npmjs.org", "inject": "npm" },
-
+    
+    { "host": "api.scaleway.ai", "inject": "scaleway" },
     { "host": "api.scaleway.com", "inject": "scaleway" },
+    { "host": "api.scaleway.ai", "inject": "scaleway-ai" },
     { "host": "rg.fr-par.scw.cloud", "inject": "scaleway-registry" },
     { "host": "rg.nl-ams.scw.cloud", "inject": "scaleway-registry" },
     { "host": "rg.pl-waw.scw.cloud", "inject": "scaleway-registry" },
