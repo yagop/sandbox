@@ -27,7 +27,6 @@
 
     { "host": "registry.npmjs.org", "inject": "npm" },
     
-    { "host": "api.scaleway.ai", "inject": "scaleway" },
     { "host": "api.scaleway.com", "inject": "scaleway" },
     { "host": "api.scaleway.ai", "inject": "scaleway-ai" },
     { "host": "rg.fr-par.scw.cloud", "inject": "scaleway-registry" },
