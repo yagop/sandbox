@@ -5,3 +5,4 @@
 # stray local artifacts
 /ca/
 *.log
+**/.DS_Store

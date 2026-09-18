@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y \
         curl \
         git \
         golang \
-        python3 \
         rust-all \
         man-db \
         manpages \
@@ -37,7 +36,8 @@ RUN apt-get update && apt-get install -y \
         unzip \
         xz-utils \
         libatomic1 \
-        libstdc++6
+        libstdc++6 \
+        bubblewrap
 
 # Generate a UTF-8 locale so tools don't warn / mangle non-ASCII output.
 RUN locale-gen en_US.UTF-8

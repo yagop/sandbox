@@ -245,6 +245,8 @@ _sbx_run() {
         --name "sandbox-$base-$tag"
         --label sandbox.role=box
         --network "$SANDBOX_NET"
+        --security-opt apparmor=unconfined
+        --security-opt seccomp=unconfined
         -e "TERM=${TERM:-xterm-256color}" -e COLORTERM
         -v "$SANDBOX_CACERT_FILE:/ca/ca.crt:ro"
         -v "$PWD:$wd" -w "$wd")
