@@ -186,7 +186,13 @@ func forwardVia(w http.ResponseWriter, r *http.Request, authority string, useTLS
 var upstream = &http.Transport{
 	// Chain through an upstream proxy if the host sets HTTP(S)_PROXY (corporate
 	// egress, nested sandboxes); dials directly otherwise.
-	Proxy:                 http.ProxyFromEnvironment,
+	Proxy: http.ProxyFromEnvironment,
+	// One fresh connection per request. Some embedded HTTP servers (old routers,
+	// ONTs) mis-frame chunked responses and ignore keep-alive, leaving stray
+	// bytes on the socket; a pooled reuse then reads them as the next status line
+	// ("malformed HTTP response"). Disabling keep-alive also makes the Transport
+	// send "Connection: close" upstream. A sandbox proxy does not need pooling.
+	DisableKeepAlives:   true,
 	TLSHandshakeTimeout: 10 * time.Second,
 	// Generous: the upstream may take a while to respond after a large upload
 	// body is fully sent (it stores/processes it before replying).
